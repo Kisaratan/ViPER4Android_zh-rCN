@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Locale
@@ -4314,7 +4315,10 @@ class MainViewModel
             val destFile = File(destDir, fileName)
             return try {
                 context.contentResolver.openInputStream(uri)?.use { input ->
-                    destFile.outputStream().use { output -> input.copyTo(output) }
+                    FileOutputStream(destFile).use { output ->
+                        input.copyTo(output)
+                        output.fd.sync()
+                    }
                 }
                 destFile
             } catch (e: Exception) {
@@ -4812,23 +4816,27 @@ class MainViewModel
 
         fun savePreset(name: String) {
             viewModelScope.launch {
-                val state = _uiState.value
-                val fxType = state.fxType
-                val mode = if (fxType == ViperParams.FX_TYPE_HEADPHONE) "Headphone" else "Speaker"
-                FileLogger.i("ViewModel", "Dispatch: savePreset name=$name mode=$mode")
-                val json = serializeStateForMode(state, fxType)
-                val preset =
-                    Preset(
-                        name = name,
-                        fxType = fxType,
-                        settingsJson = json,
-                    )
-                repository.savePreset(preset)
                 try {
+                    val state = _uiState.value
+                    val fxType = state.fxType
+                    val mode = if (fxType == ViperParams.FX_TYPE_HEADPHONE) "Headphone" else "Speaker"
+                    FileLogger.i("ViewModel", "Dispatch: savePreset name=$name mode=$mode")
+                    val json = serializeStateForMode(state, fxType)
+                    val preset =
+                        Preset(
+                            name = name,
+                            fxType = fxType,
+                            settingsJson = json,
+                        )
+                    repository.savePreset(preset)
                     val presetDir = getFilesDir("Preset")
-                    File(presetDir, "$name.json").writeText(json)
+                    val file = File(presetDir, "$name.json")
+                    FileOutputStream(file).use { fos ->
+                        fos.write(json.toByteArray(Charsets.UTF_8))
+                        fos.fd.sync()
+                    }
                 } catch (e: Exception) {
-                    FileLogger.e("ViewModel", "Failed to write preset file", e)
+                    FileLogger.e("ViewModel", "savePreset: failed for name=$name", e)
                 }
             }
         }
