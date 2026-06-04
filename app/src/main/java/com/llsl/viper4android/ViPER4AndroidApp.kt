@@ -1,16 +1,35 @@
 package com.llsl.viper4android
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.util.Property
 import com.llsl.viper4android.utils.FileLogger
 import dagger.hilt.android.HiltAndroidApp
 import java.lang.reflect.Method
+
+const val BULK_OP_CHANNEL_ID = "viper4android_bulk_op"
 
 @HiltAndroidApp
 class ViPER4AndroidApp : Application() {
     override fun onCreate() {
         super.onCreate()
         FileLogger.init(this)
+        createBulkOpChannel()
+    }
+
+    private fun createBulkOpChannel() {
+        val nm = getSystemService(NotificationManager::class.java) ?: return
+        val channel =
+            NotificationChannel(
+                BULK_OP_CHANNEL_ID,
+                getString(R.string.notification_bulk_op_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = getString(R.string.notification_bulk_op_channel_description)
+                setShowBadge(false)
+            }
+        nm.createNotificationChannel(channel)
     }
 
     companion object {

@@ -11,6 +11,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.llsl.viper4android.BULK_OP_CHANNEL_ID
 import com.llsl.viper4android.audio.AudioDevice
 import com.llsl.viper4android.audio.AudioOutputDetector
 import com.llsl.viper4android.audio.ByteArrayParam
@@ -30,6 +31,7 @@ import com.llsl.viper4android.utils.RootShell
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +47,7 @@ import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.CRC32
 import javax.inject.Inject
 
@@ -100,8 +103,12 @@ class MainViewModel
             const val PREF_AUTO_START = "auto_start"
             const val PREF_GLOBAL_MODE = "global_mode"
             const val PREF_DEBUG_MODE = "debug_mode"
-            private const val IMPORT_NOTIFICATION_ID = 2
-            private const val IMPORT_CHANNEL_ID = "viper4android_service"
+            private const val NOTIFY_ID_PRESET_IMPORT = 2
+            private const val NOTIFY_ID_PRESET_CLEAR = 3
+            private const val NOTIFY_ID_KERNEL_IMPORT = 4
+            private const val NOTIFY_ID_VDC_IMPORT = 5
+            private const val PROGRESS_NOTIFY_MIN_GAP_MS = 200L
+            private const val PROGRESS_DRAIN_DELAY_MS = 250L
         }
 
         private val _uiState = MutableStateFlow(MainUiState())
@@ -4261,16 +4268,23 @@ class MainViewModel
             return dir
         }
 
-        private fun updateNotificationProgress(
+        private val lastBulkProgressNotifyMs = ConcurrentHashMap<Int, Long>()
+
+        private fun updateBulkProgress(
+            notificationId: Int,
             title: String,
             current: Int,
             total: Int,
         ) {
+            val now = System.currentTimeMillis()
+            val last = lastBulkProgressNotifyMs[notificationId] ?: 0L
+            if (current < total && now - last < PROGRESS_NOTIFY_MIN_GAP_MS) return
+            lastBulkProgressNotifyMs[notificationId] = now
             val app = getApplication<Application>()
             val nm = app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val notification =
                 NotificationCompat
-                    .Builder(app, IMPORT_CHANNEL_ID)
+                    .Builder(app, BULK_OP_CHANNEL_ID)
                     .setSmallIcon(android.R.drawable.stat_sys_download)
                     .setContentTitle(title)
                     .setContentText("$current / $total")
@@ -4278,18 +4292,21 @@ class MainViewModel
                     .setOngoing(true)
                     .setSilent(true)
                     .build()
-            nm.notify(IMPORT_NOTIFICATION_ID, notification)
+            nm.notify(notificationId, notification)
         }
 
-        private fun completeNotificationProgress(
+        private suspend fun completeBulkProgress(
+            notificationId: Int,
             title: String,
             content: String,
         ) {
+            delay(PROGRESS_DRAIN_DELAY_MS)
+            lastBulkProgressNotifyMs.remove(notificationId)
             val app = getApplication<Application>()
             val nm = app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val notification =
                 NotificationCompat
-                    .Builder(app, IMPORT_CHANNEL_ID)
+                    .Builder(app, BULK_OP_CHANNEL_ID)
                     .setSmallIcon(android.R.drawable.stat_sys_download_done)
                     .setContentTitle(title)
                     .setContentText(content)
@@ -4298,7 +4315,7 @@ class MainViewModel
                     .setSilent(true)
                     .setAutoCancel(true)
                     .build()
-            nm.notify(IMPORT_NOTIFICATION_ID, notification)
+            nm.notify(notificationId, notification)
         }
 
         private fun copyUriToFile(
@@ -4391,11 +4408,13 @@ class MainViewModel
                     } catch (e: Exception) {
                         FileLogger.e("ViewModel", "Failed to import preset from $uri", e)
                     }
-                    if (showProgress && ((index + 1) % 5 == 0 || index + 1 == total)) {
-                        updateNotificationProgress(notificationTitle, index + 1, total)
+                    if (showProgress) {
+                        updateBulkProgress(NOTIFY_ID_PRESET_IMPORT, notificationTitle, index + 1, total)
                     }
                 }
-                if (showProgress) completeNotificationProgress(notificationTitle, "$successStr: $count / $total")
+                if (showProgress) {
+                    completeBulkProgress(NOTIFY_ID_PRESET_IMPORT, notificationTitle, "$successStr: $count / $total")
+                }
                 if (total == 1 && count == 1 && lastJson != null) {
                     val applyJson = lastJson
                     val applyFxType = lastFxType
@@ -4428,11 +4447,13 @@ class MainViewModel
                     } catch (e: Exception) {
                         FileLogger.e("ViewModel", "Failed to import kernel from $uri", e)
                     }
-                    if (showProgress && ((index + 1) % 10 == 0 || index + 1 == total)) {
-                        updateNotificationProgress(notificationTitle, index + 1, total)
+                    if (showProgress) {
+                        updateBulkProgress(NOTIFY_ID_KERNEL_IMPORT, notificationTitle, index + 1, total)
                     }
                 }
-                if (showProgress) completeNotificationProgress(notificationTitle, "$successStr: $count / $total")
+                if (showProgress) {
+                    completeBulkProgress(NOTIFY_ID_KERNEL_IMPORT, notificationTitle, "$successStr: $count / $total")
+                }
                 if (count > 0) refreshFileLists()
                 launch(Dispatchers.Main) { onResult(count > 0) }
             }
@@ -4455,11 +4476,13 @@ class MainViewModel
                     } catch (e: Exception) {
                         FileLogger.e("ViewModel", "Failed to import VDC from $uri", e)
                     }
-                    if (showProgress && ((index + 1) % 10 == 0 || index + 1 == total)) {
-                        updateNotificationProgress(notificationTitle, index + 1, total)
+                    if (showProgress) {
+                        updateBulkProgress(NOTIFY_ID_VDC_IMPORT, notificationTitle, index + 1, total)
                     }
                 }
-                if (showProgress) completeNotificationProgress(notificationTitle, "$successStr: $count / $total")
+                if (showProgress) {
+                    completeBulkProgress(NOTIFY_ID_VDC_IMPORT, notificationTitle, "$successStr: $count / $total")
+                }
                 if (count > 0) refreshFileLists()
                 launch(Dispatchers.Main) { onResult(count > 0) }
             }
@@ -4924,12 +4947,14 @@ class MainViewModel
                 var deleted = 0
                 files.forEachIndexed { index, file ->
                     if (file.delete()) deleted++
-                    if (showProgress && ((index + 1) % 5 == 0 || index + 1 == total)) {
-                        updateNotificationProgress(notificationTitle, index + 1, total)
+                    if (showProgress) {
+                        updateBulkProgress(NOTIFY_ID_PRESET_CLEAR, notificationTitle, index + 1, total)
                     }
                 }
                 repository.deleteAllPresets()
-                if (showProgress) completeNotificationProgress(notificationTitle, "$successStr: $deleted / $total")
+                if (showProgress) {
+                    completeBulkProgress(NOTIFY_ID_PRESET_CLEAR, notificationTitle, "$successStr: $deleted / $total")
+                }
                 FileLogger.i("ViewModel", "clearAllPresets: files deleted=$deleted/$total, db wiped")
                 launch(Dispatchers.Main) { onResult(deleted) }
             }

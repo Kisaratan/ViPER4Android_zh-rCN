@@ -13,6 +13,8 @@
     <string name="notification_channel_description">placeholder</string>
     <string name="notification_title">placeholder</string>
     <string name="notification_text">placeholder</string>
+    <string name="notification_bulk_op_channel_name">placeholder</string>
+    <string name="notification_bulk_op_channel_description">placeholder</string>
 
     <!-- Tabs -->
     <string name="tab_headphone">placeholder</string>

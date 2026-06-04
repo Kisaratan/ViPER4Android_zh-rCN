@@ -5,6 +5,8 @@
     <string name="notification_channel_description">Shows when ViPER4Android is processing audio</string>
     <string name="notification_title">ViPER4Android</string>
     <string name="notification_text">Audio processing active</string>
+    <string name="notification_bulk_op_channel_name">Bulk Operations</string>
+    <string name="notification_bulk_op_channel_description">Progress for bulk operations</string>
 
     <!-- Tabs -->
     <string name="tab_headphone">Headphone</string>
