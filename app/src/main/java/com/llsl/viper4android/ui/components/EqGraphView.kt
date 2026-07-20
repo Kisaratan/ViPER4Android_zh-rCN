@@ -395,12 +395,10 @@ fun EqEditDialog(
                     if (index < localBands.size) {
                         val atMin = localBands[index] <= DB_MIN
                         val atMax = localBands[index] >= DB_MAX
+                        var showBandEdit by remember { mutableStateOf(false) }
 
                         val applyBandChange = { newVal: Float ->
                             localBands[index] = newVal.coerceIn(DB_MIN, DB_MAX)
-                            // Native List<Double> on the wire (canonical v2);
-                            // round to 1 decimal at the boundary to match
-                            // legacy SP "%.1f" precision.
                             val list =
                                 localBands.map {
                                     String.format(Locale.US, "%.1f", it).toDouble()
@@ -478,8 +476,27 @@ fun EqEditDialog(
                             Text(
                                 text = "${"%.1f".format(localBands[index])}dB",
                                 style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.width(52.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier =
+                                    Modifier
+                                        .width(52.dp)
+                                        .clickable { showBandEdit = true },
                                 maxLines = 1,
+                            )
+                        }
+
+                        if (showBandEdit) {
+                            NumberInputDialog(
+                                label = label,
+                                edit =
+                                    SliderEdit(
+                                        displayValue = localBands[index].toDouble(),
+                                        displayRange = DB_MIN.toDouble()..DB_MAX.toDouble(),
+                                        decimals = 1,
+                                        unit = "dB",
+                                        onCommit = { applyBandChange(it.toFloat()) },
+                                    ),
+                                onDismiss = { showBandEdit = false },
                             )
                         }
                     }
