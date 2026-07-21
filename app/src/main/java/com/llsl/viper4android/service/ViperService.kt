@@ -67,13 +67,15 @@ class ViperService : LifecycleService() {
     private var globalEffect: ViperEffect? = null
     private var useAidlTypeUuid: Boolean = true
     private var globalMode: Boolean = false
-    private var masterEnabled: Boolean = false
     private var audioOutputDetector: AudioOutputDetector? = null
     private var sessionMonitor: AudioSessionMonitor? = null
     private var stateProvider: (() -> EffectState)? = null
     private var lastUiState: EffectState? = null
     private var lastBulkDdcKey: String? = null
     private var lastBulkConvolverKey: String? = null
+    private var bootMasterEnabled: Boolean = false
+    private val masterEnabled: Boolean
+        get() = stateProvider?.invoke()?.masterEnable ?: lastUiState?.masterEnable ?: bootMasterEnabled
 
     fun setStateProvider(provider: () -> EffectState) {
         stateProvider = provider
@@ -86,7 +88,7 @@ class ViperService : LifecycleService() {
         lifecycleScope.launch {
             useAidlTypeUuid = repository.aidlMode
             globalMode = repository.getBooleanPreference(ViperRepository.PREF_GLOBAL_MODE).first()
-            masterEnabled = repository.getBooleanPreference(ViperRepository.PREF_MASTER_ENABLE).first()
+            bootMasterEnabled = repository.getBooleanPreference(ViperRepository.PREF_MASTER_ENABLE).first()
             if (masterEnabled) {
                 if (globalMode) {
                     initGlobalEffect()
@@ -406,27 +408,25 @@ class ViperService : LifecycleService() {
         }
     }
 
-    fun dispatchFullState(
-        state: EffectState,
-        masterEnabled: Boolean,
-    ) {
+    fun dispatchFullState(state: EffectState) {
+        val isMasterOn = masterEnabled
         if (useAidlTypeUuid) {
             FileLogger.d(
                 "Service",
-                "AIDL shm full state dispatch (master=$masterEnabled)",
+                "AIDL shm full state dispatch (master=$isMasterOn)",
             )
             writeAidlFullState(state)
             return
         }
         lastUiState = state
         globalEffect?.let { effect ->
-            effect.enabled = masterEnabled
-            applyFullStateHidl(effect, state, masterEnabled)
+            effect.enabled = isMasterOn
+            applyFullStateHidl(effect, state, isMasterOn)
         }
         for (i in 0 until sessions.size) {
             val effect = sessions.valueAt(i)
-            effect.enabled = masterEnabled
-            applyFullStateHidl(effect, state, masterEnabled)
+            effect.enabled = isMasterOn
+            applyFullStateHidl(effect, state, isMasterOn)
         }
     }
 
@@ -651,10 +651,8 @@ class ViperService : LifecycleService() {
         return null
     }
 
-    fun setMasterEnabled(enabled: Boolean) {
-        if (masterEnabled == enabled) return
-        masterEnabled = enabled
-        if (enabled) {
+    fun reconcileMaster() {
+        if (masterEnabled) {
             if (globalMode) {
                 if (globalEffect == null) initGlobalEffect()
             } else {
