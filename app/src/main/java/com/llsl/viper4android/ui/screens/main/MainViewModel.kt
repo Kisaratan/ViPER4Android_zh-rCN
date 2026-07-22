@@ -569,21 +569,27 @@ class MainViewModel
         fun addDynamicEqBand() {
             val state = _uiState.value
             val cur = state.dynamicEq
-            if (cur.bandCount >= 8) return
+            if (cur.bandCount >= 10) return
             val newCount = cur.bandCount + 1
+
+            fun <T> List<T>.resized(
+                size: Int,
+                fill: (Int) -> T,
+            ): List<T> = List(size) { getOrElse(it, fill) }
+
             val newFreq =
-                if (cur.freqs.isEmpty()) {
+                if (cur.bandCount == 0) {
                     1000
                 } else {
-                    (cur.freqs.last() * 2).coerceAtMost(20000)
+                    (cur.freqs.getOrElse(cur.bandCount - 1) { 1000 } * 2).coerceAtMost(20000)
                 }
-            applyPref(Effects.dynamicEq.freqs, cur.freqs + newFreq)
-            applyPref(Effects.dynamicEq.qs, cur.qs + 150)
-            applyPref(Effects.dynamicEq.gains, cur.gains + 0)
-            applyPref(Effects.dynamicEq.thresholds, cur.thresholds + (-300))
-            applyPref(Effects.dynamicEq.attacks, cur.attacks + 10)
-            applyPref(Effects.dynamicEq.releases, cur.releases + 100)
-            applyPref(Effects.dynamicEq.filterTypes, cur.filterTypes + 0)
+            applyPref(Effects.dynamicEq.freqs, cur.freqs.resized(newCount) { newFreq })
+            applyPref(Effects.dynamicEq.qs, cur.qs.resized(newCount) { 150 })
+            applyPref(Effects.dynamicEq.gains, cur.gains.resized(newCount) { 0 })
+            applyPref(Effects.dynamicEq.thresholds, cur.thresholds.resized(newCount) { -300 })
+            applyPref(Effects.dynamicEq.attacks, cur.attacks.resized(newCount) { 10 })
+            applyPref(Effects.dynamicEq.releases, cur.releases.resized(newCount) { 100 })
+            applyPref(Effects.dynamicEq.filterTypes, cur.filterTypes.resized(newCount) { 0 })
             applyPref(Effects.dynamicEq.bandCount, newCount)
         }
 
@@ -591,18 +597,20 @@ class MainViewModel
             val state = _uiState.value
             val cur = state.dynamicEq
             if (cur.bandCount <= 1) return
-            if (index !in cur.freqs.indices) return
+            if (index !in 0 until cur.bandCount) return
             val newCount = cur.bandCount - 1
 
-            fun <T> List<T>.removeAt(i: Int) = filterIndexed { idx, _ -> idx != i }
+            fun List<Int>.removeBand(): List<Int> =
+                take(cur.bandCount).filterIndexed { idx, _ -> idx != index }
+
             applyPref(Effects.dynamicEq.bandCount, newCount)
-            applyPref(Effects.dynamicEq.freqs, cur.freqs.removeAt(index))
-            applyPref(Effects.dynamicEq.qs, cur.qs.removeAt(index))
-            applyPref(Effects.dynamicEq.gains, cur.gains.removeAt(index))
-            applyPref(Effects.dynamicEq.thresholds, cur.thresholds.removeAt(index))
-            applyPref(Effects.dynamicEq.attacks, cur.attacks.removeAt(index))
-            applyPref(Effects.dynamicEq.releases, cur.releases.removeAt(index))
-            applyPref(Effects.dynamicEq.filterTypes, cur.filterTypes.removeAt(index))
+            applyPref(Effects.dynamicEq.freqs, cur.freqs.removeBand())
+            applyPref(Effects.dynamicEq.qs, cur.qs.removeBand())
+            applyPref(Effects.dynamicEq.gains, cur.gains.removeBand())
+            applyPref(Effects.dynamicEq.thresholds, cur.thresholds.removeBand())
+            applyPref(Effects.dynamicEq.attacks, cur.attacks.removeBand())
+            applyPref(Effects.dynamicEq.releases, cur.releases.removeBand())
+            applyPref(Effects.dynamicEq.filterTypes, cur.filterTypes.removeBand())
         }
 
         fun setPlaybackGainControlEnabled(enabled: Boolean) {

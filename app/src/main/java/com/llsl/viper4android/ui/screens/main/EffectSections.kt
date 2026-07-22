@@ -1145,7 +1145,7 @@ fun DynamicEqSection(
                 }
             }
             val lastFreq = if (bandCount > 0) freqs.getOrElse(bandCount - 1) { 0 } else 0
-            if (bandCount < 8 && lastFreq < 20000) {
+            if (bandCount < 10 && lastFreq < 20000) {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier =

@@ -608,7 +608,7 @@ class DynamicEqEffect : EffectGroupBuilder("dynamicEq") {
         intList(
             ViperParams.PARAM_DYNAMIC_EQ_BAND_FREQUENCY,
             "freqs",
-            listOf(60, 150, 400, 1000, 2500, 5000, 8000, 12000),
+            listOf(60, 150, 400),
             { it.dynamicEq.freqs },
             { copy(dynamicEq = dynamicEq.copy(freqs = it)) },
         )
@@ -616,7 +616,7 @@ class DynamicEqEffect : EffectGroupBuilder("dynamicEq") {
         intList(
             ViperParams.PARAM_DYNAMIC_EQ_BAND_Q,
             "qs",
-            listOf(100, 100, 150, 150, 150, 200, 200, 200),
+            listOf(100, 100, 150),
             { it.dynamicEq.qs },
             { copy(dynamicEq = dynamicEq.copy(qs = it)) },
         )
@@ -624,7 +624,7 @@ class DynamicEqEffect : EffectGroupBuilder("dynamicEq") {
         intList(
             ViperParams.PARAM_DYNAMIC_EQ_BAND_GAIN,
             "gains",
-            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 0, 0),
             { it.dynamicEq.gains },
             { copy(dynamicEq = dynamicEq.copy(gains = it)) },
         )
@@ -632,7 +632,7 @@ class DynamicEqEffect : EffectGroupBuilder("dynamicEq") {
         intList(
             ViperParams.PARAM_DYNAMIC_EQ_BAND_THRESHOLD,
             "thresholds",
-            listOf(-300, -300, -250, -250, -200, -200, -200, -200),
+            listOf(-200, -200, -200),
             { it.dynamicEq.thresholds },
             { copy(dynamicEq = dynamicEq.copy(thresholds = it)) },
         )
@@ -640,7 +640,7 @@ class DynamicEqEffect : EffectGroupBuilder("dynamicEq") {
         intList(
             ViperParams.PARAM_DYNAMIC_EQ_BAND_ATTACK,
             "attacks",
-            listOf(10, 10, 10, 10, 10, 10, 10, 10),
+            listOf(10, 10, 10),
             { it.dynamicEq.attacks },
             { copy(dynamicEq = dynamicEq.copy(attacks = it)) },
         )
@@ -648,7 +648,7 @@ class DynamicEqEffect : EffectGroupBuilder("dynamicEq") {
         intList(
             ViperParams.PARAM_DYNAMIC_EQ_BAND_RELEASE,
             "releases",
-            listOf(100, 100, 100, 100, 100, 100, 100, 100),
+            listOf(100, 100, 100),
             { it.dynamicEq.releases },
             { copy(dynamicEq = dynamicEq.copy(releases = it)) },
         )
@@ -656,7 +656,7 @@ class DynamicEqEffect : EffectGroupBuilder("dynamicEq") {
         intList(
             ViperParams.PARAM_DYNAMIC_EQ_BAND_FILTER_TYPE,
             "filterTypes",
-            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 0, 0),
             { it.dynamicEq.filterTypes },
             { copy(dynamicEq = dynamicEq.copy(filterTypes = it)) },
         )
