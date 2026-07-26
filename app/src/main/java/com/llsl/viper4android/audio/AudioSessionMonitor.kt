@@ -19,7 +19,11 @@ class AudioSessionMonitor(
     private val activePiids = mutableMapOf<Int, SessionInfo>()
     private var registered = false
     private var pendingResolve = false
-    private var isSystem : Boolean?= null
+
+    private val isSystemPrivileged: Boolean by lazy {
+        context.checkSelfPermission("android.permission.MODIFY_AUDIO_ROUTING") ==
+            PackageManager.PERMISSION_GRANTED
+    }
 
     private data class SessionInfo(
         val sessionId: Int,
@@ -62,18 +66,17 @@ class AudioSessionMonitor(
     }
 
     private fun resolveFromDumpsys() {
-        val isSystemMode = isSystemPrivilegedMode()
-
-        if (!isSystemMode && !RootShell.isRootAvailable()) {
+        if (!isSystemPrivileged && !RootShell.isRootAvailable()) {
             FileLogger.w(TAG, "Root not available")
             return
         }
 
-        val discovered = if (isSystemMode) {
-            queryActivePlayersSys()
-        } else {
-            queryActivePlayers()
-        } ?: return
+        val discovered =
+            if (isSystemPrivileged) {
+                queryActivePlayersSys()
+            } else {
+                queryActivePlayers()
+            } ?: return
 
         mainHandler.post {
             val discoveredPiids = discovered.keys
@@ -117,27 +120,12 @@ class AudioSessionMonitor(
         }
     }
 
-    private fun isSystemPrivilegedMode(): Boolean {
-        isSystem?.let { return it }
-        val appInfo = context.applicationInfo
-        var sys :Boolean = (appInfo.flags and
-            (android.content.pm.ApplicationInfo.FLAG_SYSTEM or
-                android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
-
-        sys = (context.checkSelfPermission("android.permission.MODIFY_AUDIO_ROUTING") ==
-            PackageManager.PERMISSION_GRANTED) && sys
-
-        isSystem = sys
-
-        return sys
-    }
-
     private fun queryActivePlayersSys(): Map<Int, SessionInfo>? =
         try {
             val playerSessions = mutableMapOf<Int, SessionInfo>()
             val configs = audioManager.activePlaybackConfigurations
             val configClass = AudioPlaybackConfiguration::class.java
-            //Required when not using system internal sdk
+            // Required when not using system internal sdk
             val isActiveMethod = configClass.getMethod("isActive")
             val getAudioSessionIdMethod = configClass.getMethod("getSessionId")
             val getClientUidMethod = configClass.getMethod("getClientUid")
@@ -149,10 +137,10 @@ class AudioSessionMonitor(
                 val sid = getAudioSessionIdMethod.invoke(config) as? Int
                 if (sid == null || sid <= 0) continue
 
-                //Some player use LL API do not have piid, make sure to fake one from session id
+                // Some player use LL API do not have piid, make sure to fake one from session id
                 val piid = (getPlayerInterfaceIdMethod.invoke(config) as Int).let { if (it != 0) it else -sid }
 
-                val uid = getClientUidMethod.invoke(config) as? Int;
+                val uid = getClientUidMethod.invoke(config) as? Int
                 if (uid == null || uid < 0) continue
                 val pkg = context.packageManager.getPackagesForUid(uid)?.firstOrNull() ?: uid.toString()
 
