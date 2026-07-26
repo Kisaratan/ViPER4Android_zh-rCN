@@ -600,8 +600,7 @@ class MainViewModel
             if (index !in 0 until cur.bandCount) return
             val newCount = cur.bandCount - 1
 
-            fun List<Int>.removeBand(): List<Int> =
-                take(cur.bandCount).filterIndexed { idx, _ -> idx != index }
+            fun List<Int>.removeBand(): List<Int> = take(cur.bandCount).filterIndexed { idx, _ -> idx != index }
 
             applyPref(Effects.dynamicEq.bandCount, newCount)
             applyPref(Effects.dynamicEq.freqs, cur.freqs.removeBand())
