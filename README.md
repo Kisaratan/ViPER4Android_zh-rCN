@@ -122,7 +122,6 @@ Presets are stored in the **v2 grouped-JSON format** (`schemaVersion: 2`):
 {
   "schemaVersion": 2,
   "name": "My Preset",
-  "masterEnable": true,
   "equalizer": { "enable": true, "bandCount": 10, "bands": [3.0, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0], "presetId": null },
   "dynamicEq": { "enable": false, "bandCount": 4, "freqs": [...], "gains": [...] },
   "ddc": { "enable": false, "device": "" }

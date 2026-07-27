@@ -273,7 +273,6 @@ fun serializeEffectPrefs(
         if (name != null) root.put(KEY_NAME, name)
         if (createdAt != null) root.put(KEY_CREATED_AT, createdAt)
     }
-    putPrefValue(root, Effects.masterEnable, state)
     for (group in EFFECT_GROUPS) {
         val obj = JSONObject()
         for (pref in group.prefs) {
@@ -332,7 +331,6 @@ fun deserializeEffectPrefs(
     state: EffectState,
 ): EffectState {
     var s = state
-    s = applyPrefFromJson(s, Effects.masterEnable, obj)
     for (group in EFFECT_GROUPS) {
         val sub = obj.optJSONObject(group.effectKey) ?: continue
         for (pref in group.prefs) {

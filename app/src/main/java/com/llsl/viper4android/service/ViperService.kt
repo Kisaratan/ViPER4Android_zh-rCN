@@ -86,18 +86,23 @@ class ViperService : LifecycleService() {
         startForeground(NOTIFICATION_ID, buildNotification())
         FileLogger.i("Service", "Service created")
         lifecycleScope.launch {
-            useAidlTypeUuid = repository.aidlMode
-            globalMode = repository.getBooleanPreference(ViperRepository.PREF_GLOBAL_MODE).first()
-            bootMasterEnabled = repository.getBooleanPreference(ViperRepository.PREF_MASTER_ENABLE).first()
+            ensureConfigLoaded()
             if (masterEnabled) {
-                if (globalMode) {
-                    initGlobalEffect()
-                } else {
-                    startSessionMonitor()
-                }
+                val state = ViperDispatcher.loadFullStateFromPrefs(repository)
+                applyState(state, true)
             }
             startAudioOutputMonitor()
         }
+    }
+
+    private var configLoaded = false
+
+    private suspend fun ensureConfigLoaded() {
+        if (configLoaded) return
+        useAidlTypeUuid = repository.aidlMode
+        globalMode = repository.getBooleanPreference(ViperRepository.PREF_GLOBAL_MODE).first()
+        bootMasterEnabled = repository.getBooleanPreference(ViperRepository.PREF_MASTER_ENABLE).first()
+        configLoaded = true
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -115,9 +120,48 @@ class ViperService : LifecycleService() {
         }
         globalEffect = effect
         FileLogger.i("Service", "Global effect created (aidlType=$useAidlTypeUuid)")
-        lifecycleScope.launch {
-            dispatchFullStateToEffect(effect)
-            FileLogger.i("Service", "Global effect initialized with full state")
+    }
+
+    private fun applyState(
+        state: EffectState,
+        masterOn: Boolean,
+    ) {
+        if (!masterOn) {
+            stopSessionMonitor()
+            releaseAllSessions()
+            globalEffect?.let {
+                it.enabled = false
+                it.release()
+            }
+            globalEffect = null
+            return
+        }
+        if (globalMode) {
+            if (globalEffect == null) initGlobalEffect()
+        } else {
+            if (sessionMonitor == null) startSessionMonitor()
+        }
+        var shmWritten = false
+        globalEffect?.let { effect ->
+            effect.enabled = true
+            if (useAidlTypeUuid) {
+                writeAidlFullState(state)
+                shmWritten = true
+            } else {
+                applyFullStateHidl(effect, state, true)
+            }
+        }
+        for (i in 0 until sessions.size) {
+            val effect = sessions.valueAt(i)
+            effect.enabled = true
+            if (useAidlTypeUuid) {
+                if (!shmWritten) {
+                    writeAidlFullState(state)
+                    shmWritten = true
+                }
+            } else {
+                applyFullStateHidl(effect, state, true)
+            }
         }
     }
 
@@ -165,30 +209,7 @@ class ViperService : LifecycleService() {
                 )
                 s
             }
-
-        val isMasterOn = state.masterEnable
-        var shmWritten = false
-        globalEffect?.let {
-            it.enabled = isMasterOn
-            if (useAidlTypeUuid) {
-                writeAidlFullState(state)
-                shmWritten = true
-            } else {
-                applyFullStateHidl(it, state, isMasterOn)
-            }
-        }
-        for (i in 0 until sessions.size) {
-            val effect = sessions.valueAt(i)
-            effect.enabled = isMasterOn
-            if (useAidlTypeUuid) {
-                if (!shmWritten) {
-                    writeAidlFullState(state)
-                    shmWritten = true
-                }
-            } else {
-                applyFullStateHidl(effect, state, isMasterOn)
-            }
-        }
+        applyState(state, masterEnabled)
     }
 
     private suspend fun dispatchFullStateToEffect(
@@ -409,25 +430,7 @@ class ViperService : LifecycleService() {
     }
 
     fun dispatchFullState(state: EffectState) {
-        val isMasterOn = masterEnabled
-        if (useAidlTypeUuid) {
-            FileLogger.d(
-                "Service",
-                "AIDL shm full state dispatch (master=$isMasterOn)",
-            )
-            writeAidlFullState(state)
-            return
-        }
-        lastUiState = state
-        globalEffect?.let { effect ->
-            effect.enabled = isMasterOn
-            applyFullStateHidl(effect, state, isMasterOn)
-        }
-        for (i in 0 until sessions.size) {
-            val effect = sessions.valueAt(i)
-            effect.enabled = isMasterOn
-            applyFullStateHidl(effect, state, isMasterOn)
-        }
+        applyState(state, masterEnabled)
     }
 
     fun parseVdc(file: File): Pair<List<FloatArray>, List<FloatArray>>? {
@@ -651,49 +654,24 @@ class ViperService : LifecycleService() {
         return null
     }
 
-    fun reconcileMaster() {
-        if (masterEnabled) {
-            if (globalMode) {
-                if (globalEffect == null) initGlobalEffect()
-            } else {
-                startSessionMonitor()
-            }
-        } else {
-            stopSessionMonitor()
-            releaseAllSessions()
-            globalEffect?.let {
-                it.enabled = false
-                it.release()
-            }
-            globalEffect = null
-        }
-    }
-
     fun setGlobalMode(enabled: Boolean) {
         globalMode = enabled
         if (!masterEnabled) {
-            stopSessionMonitor()
-            releaseAllSessions()
-            globalEffect?.let {
-                it.enabled = false
-                it.release()
-            }
-            globalEffect = null
+            applyState(EffectState(), false)
             return
         }
         if (enabled) {
             stopSessionMonitor()
             releaseAllSessions()
-            if (globalEffect == null) {
-                initGlobalEffect()
-            }
         } else {
             globalEffect?.let {
                 it.enabled = false
                 it.release()
             }
             globalEffect = null
-            startSessionMonitor()
+        }
+        lifecycleScope.launch {
+            applyState(ViperDispatcher.loadFullStateFromPrefs(repository), true)
         }
     }
 

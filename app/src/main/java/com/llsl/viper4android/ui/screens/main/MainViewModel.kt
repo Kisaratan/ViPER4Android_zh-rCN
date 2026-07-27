@@ -315,24 +315,13 @@ class MainViewModel
 
         fun dispatchFullState() {
             val service = viperService ?: return
-            service.reconcileMaster()
-            val state = _uiState.value
-            if (!state.masterEnable) {
-                FileLogger.d("ViewModel", "dispatchFullState: skipped (master OFF)")
-                return
-            }
-            FileLogger.d("ViewModel", "dispatchFullState: master=ON")
-            service.dispatchFullState(state)
+            service.dispatchFullState(_uiState.value)
         }
 
         fun setMasterEnabled(enabled: Boolean) {
             FileLogger.i("ViewModel", "Master: ${if (enabled) "ON" else "OFF"}")
             applyPref(Effects.masterEnable, enabled)
-            if (enabled) {
-                dispatchFullState()
-            } else {
-                viperService?.reconcileMaster()
-            }
+            dispatchFullState()
         }
 
         fun setConvolverKernel(fileName: String) {

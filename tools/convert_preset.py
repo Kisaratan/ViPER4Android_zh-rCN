@@ -136,12 +136,6 @@ GROUP_ORDER: dict[str, list[str]] = {
 }
 
 PREF_TABLE: dict[str, dict[str, Any]] = {
-    "masterEnabled": {
-        "type": "BoolPref",
-        "spk": "spkMasterEnabled",
-        "default": False,
-        "slot": ("top", "masterEnable"),
-    },
     "outputVolume": {
         "type": "IntPref",
         "spk": "spkOutputVolume",
@@ -1147,11 +1141,6 @@ def v1_to_v2(
     out: dict[str, Any] = {"schemaVersion": 2}
     if name is not None:
         out["name"] = name
-
-    master_src = "spkMasterEnabled" if is_spk else "masterEnabled"
-    if fill_defaults or master_src in v1:
-        raw = v1.get(master_src, PREF_TABLE["masterEnabled"]["default"])
-        out["masterEnable"] = _coerce_scalar("BoolPref", raw, False)
 
     for group_name, fields in GROUP_ORDER.items():
         group_obj: dict[str, Any] = {}
