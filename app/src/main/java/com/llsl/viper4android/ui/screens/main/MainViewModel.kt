@@ -22,6 +22,7 @@ import com.llsl.viper4android.data.repository.ViperRepository
 import com.llsl.viper4android.data.repository.ViperRepository.Companion.PREF_AUTO_START
 import com.llsl.viper4android.data.repository.ViperRepository.Companion.PREF_DEBUG_MODE
 import com.llsl.viper4android.data.repository.ViperRepository.Companion.PREF_GLOBAL_MODE
+import com.llsl.viper4android.data.repository.ViperRepository.Companion.PREF_MASTER_ENABLE
 import com.llsl.viper4android.effect.BoolListPref
 import com.llsl.viper4android.effect.BoolPref
 import com.llsl.viper4android.effect.DoubleListPref
@@ -51,6 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -146,6 +148,7 @@ class MainViewModel
 
         init {
             refreshFileLists()
+            observeExternalMasterChanges()
             val initialDevice = audioOutputDetector.activeDevice.value
             viewModelScope.launch {
                 loadSettingsPreferences()
@@ -178,6 +181,17 @@ class MainViewModel
                 serviceBound = false
             }
             viperService = null
+        }
+
+        private fun observeExternalMasterChanges() {
+            viewModelScope.launch {
+                repository
+                    .getBooleanPreference(PREF_MASTER_ENABLE, false)
+                    .distinctUntilChanged()
+                    .collect { enabled ->
+                        _uiState.update { it.copy(masterEnable = enabled) }
+                    }
+            }
         }
 
         fun <T> applyPref(

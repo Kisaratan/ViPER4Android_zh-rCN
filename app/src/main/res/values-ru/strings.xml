@@ -7,6 +7,7 @@
     <string name="notification_text">Обработка аудио активна</string>
     <string name="notification_bulk_op_channel_name">Групповые операции</string>
     <string name="notification_bulk_op_channel_description">Прогресс выполнения групповых операций</string>
+    <string name="qs_tile_master_label">Master</string>
 
     <!-- Master -->
     <string name="master_enable">Мастер включён</string>

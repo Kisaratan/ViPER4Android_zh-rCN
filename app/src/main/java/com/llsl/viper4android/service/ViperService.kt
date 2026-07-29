@@ -48,11 +48,25 @@ class ViperService : LifecycleService() {
 
         const val ACTION_START = "com.llsl.viper4android.service.START"
         const val ACTION_STOP = "com.llsl.viper4android.service.STOP"
+        const val ACTION_TOGGLE_MASTER = "com.llsl.viper4android.service.TOGGLE_MASTER"
+        const val EXTRA_MASTER_ENABLED = "com.llsl.viper4android.service.EXTRA_MASTER_ENABLED"
 
         fun startService(context: Context) {
             val intent =
                 Intent(context, ViperService::class.java).apply {
                     action = ACTION_START
+                }
+            context.startForegroundService(intent)
+        }
+
+        fun toggleMaster(
+            context: Context,
+            enabled: Boolean,
+        ) {
+            val intent =
+                Intent(context, ViperService::class.java).apply {
+                    action = ACTION_TOGGLE_MASTER
+                    putExtra(EXTRA_MASTER_ENABLED, enabled)
                 }
             context.startForegroundService(intent)
         }
@@ -278,6 +292,18 @@ class ViperService : LifecycleService() {
                 globalEffect = null
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
+            }
+
+            ACTION_TOGGLE_MASTER -> {
+                val next = intent.getBooleanExtra(EXTRA_MASTER_ENABLED, false)
+                lifecycleScope.launch {
+                    ensureConfigLoaded()
+                    bootMasterEnabled = next
+                    val state = ViperDispatcher.loadFullStateFromPrefs(repository)
+                    stateProvider = null
+                    lastUiState = state
+                    applyState(state, next)
+                }
             }
         }
         return START_STICKY
