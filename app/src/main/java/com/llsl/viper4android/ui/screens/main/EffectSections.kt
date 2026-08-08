@@ -922,7 +922,7 @@ fun DdcSection(
 
     val vdcFiles by viewModel.vdcFileList.collectAsStateWithLifecycle()
     val vdcNoneLabel = stringResource(R.string.label_none)
-    val cdvOptions = vdcFiles.ifEmpty { listOf(vdcNoneLabel) }
+    val cdvOptions = listOf(vdcNoneLabel) + vdcFiles
 
     EffectSection(
         title = stringResource(R.string.section_ddc),
@@ -1306,7 +1306,7 @@ fun ConvolverSection(
 
     val kernelFiles by viewModel.kernelFileList.collectAsStateWithLifecycle()
     val kernelNoneLabel = stringResource(R.string.label_none)
-    val kernelOptions = kernelFiles.ifEmpty { listOf(kernelNoneLabel) }
+    val kernelOptions = listOf(kernelNoneLabel) + kernelFiles
 
     EffectSection(
         title = stringResource(R.string.section_convolver),

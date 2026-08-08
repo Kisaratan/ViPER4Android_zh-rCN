@@ -363,7 +363,7 @@ class MainViewModel
         fun setDdcDevice(name: String) {
             FileLogger.i("ViewModel", "DDC device: $name")
             applyPref(Effects.ddc.device, name)
-            if (name.isEmpty()) return
+            if (!_uiState.value.ddc.enable) return
             viewModelScope.launch(Dispatchers.IO) { applyDdcDevice(name) }
         }
 
@@ -694,10 +694,7 @@ class MainViewModel
 
         fun setDdcEnabled(enabled: Boolean) {
             applyPref(Effects.ddc.enable, enabled)
-            if (enabled &&
-                _uiState.value.ddc.device
-                    .isNotEmpty()
-            ) {
+            if (enabled) {
                 val v = _uiState.value.ddc
                 applyPref(Effects.ddc.device, v.device)
                 viewModelScope.launch(Dispatchers.IO) {
@@ -752,13 +749,11 @@ class MainViewModel
         }
 
         fun setConvolverEnabled(enabled: Boolean) {
-            applyPref(Effects.convolver.enable, enabled)
-            if (enabled &&
-                _uiState.value.convolver.kernelFile
-                    .isNotEmpty()
-            ) {
+            applyPref(Effects.convolver.enable, enabled, last = !enabled)
+            if (enabled) {
                 val v = _uiState.value.convolver
-                applyPref(Effects.convolver.kernelFile, v.kernelFile)
+                applyPref(Effects.convolver.kernelFile, v.kernelFile, last = false)
+                applyPref(Effects.convolver.crossChannel, v.crossChannel)
                 viewModelScope.launch(Dispatchers.IO) {
                     applyConvolverKernel(v.kernelFile)
                 }
@@ -1197,6 +1192,9 @@ class MainViewModel
                 file.delete()
                 if (_uiState.value.ddc.device == name) {
                     applyPref(Effects.ddc.device, "")
+                    if (_uiState.value.ddc.enable) {
+                        viewModelScope.launch(Dispatchers.IO) { applyDdcDevice("") }
+                    }
                 }
                 refreshFileLists()
                 true
@@ -1213,6 +1211,9 @@ class MainViewModel
                 file.delete()
                 if (_uiState.value.convolver.kernelFile == fileName) {
                     applyPref(Effects.convolver.kernelFile, "")
+                    if (_uiState.value.convolver.enable) {
+                        viewModelScope.launch(Dispatchers.IO) { applyConvolverKernel("") }
+                    }
                 }
                 refreshFileLists()
                 true
