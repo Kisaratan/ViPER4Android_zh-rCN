@@ -1027,17 +1027,32 @@ class MainViewModel
             nm.notify(notificationId, notification)
         }
 
+        private fun queryDisplayName(uri: Uri): String? =
+            getApplication<Application>()
+                .contentResolver
+                .query(uri, null, null, null, null)
+                ?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (cursor.moveToFirst() && nameIndex >= 0) cursor.getString(nameIndex) else null
+                }
+
+        // SAF pickers filter by MIME type, not extension; enforce allowed extensions here.
+        private fun filterByExtension(
+            uris: List<Uri>,
+            allowedExtensions: Set<String>,
+        ): List<Uri> =
+            uris.filter { uri ->
+                val name = queryDisplayName(uri) ?: return@filter false
+                allowedExtensions.any { name.endsWith(".$it", ignoreCase = true) }
+            }
+
         private fun copyUriToFile(
             uri: Uri,
             destDir: File,
             fallbackName: String,
         ): File? {
             val context = getApplication<Application>()
-            val fileName =
-                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                    if (cursor.moveToFirst() && nameIndex >= 0) cursor.getString(nameIndex) else null
-                } ?: fallbackName
+            val fileName = queryDisplayName(uri) ?: fallbackName
             val destFile = File(destDir, fileName)
             return try {
                 context.contentResolver.openInputStream(uri)?.use { input ->
@@ -1059,6 +1074,11 @@ class MainViewModel
             successStr: String,
             onResult: (Boolean) -> Unit,
         ) {
+            val uris = filterByExtension(uris, setOf("json"))
+            if (uris.isEmpty()) {
+                onResult(false)
+                return
+            }
             viewModelScope.launch(Dispatchers.IO) {
                 val total = uris.size
                 val showProgress = total > 10
@@ -1118,6 +1138,11 @@ class MainViewModel
             successStr: String,
             onResult: (Boolean) -> Unit,
         ) {
+            val uris = filterByExtension(uris, setOf("wav", "irs"))
+            if (uris.isEmpty()) {
+                onResult(false)
+                return
+            }
             viewModelScope.launch(Dispatchers.IO) {
                 val total = uris.size
                 val showProgress = total > 50
@@ -1147,6 +1172,11 @@ class MainViewModel
             successStr: String,
             onResult: (Boolean) -> Unit,
         ) {
+            val uris = filterByExtension(uris, setOf("vdc"))
+            if (uris.isEmpty()) {
+                onResult(false)
+                return
+            }
             viewModelScope.launch(Dispatchers.IO) {
                 val total = uris.size
                 val showProgress = total > 50
