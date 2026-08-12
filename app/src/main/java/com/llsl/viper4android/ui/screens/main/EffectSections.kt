@@ -6,8 +6,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
@@ -107,7 +107,7 @@ fun EffectSection(
     content: @Composable () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-    var showHelpDialog by remember { mutableStateOf(false) }
+    var showHelpDialog by rememberSaveable { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
     Card(
@@ -132,7 +132,7 @@ fun EffectSection(
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         showHelpDialog = true
-                                    }
+                                    },
                                 )
                             } else {
                                 Modifier.combinedClickable(
@@ -140,11 +140,10 @@ fun EffectSection(
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         showHelpDialog = true
-                                    }
+                                    },
                                 )
-                            }
-                        )
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                            },
+                        ).padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (icon != null) {
@@ -205,7 +204,7 @@ fun EffectSection(
                 TextButton(onClick = { showHelpDialog = false }) {
                     Text(text = stringResource(android.R.string.ok))
                 }
-            }
+            },
         )
     }
 }
