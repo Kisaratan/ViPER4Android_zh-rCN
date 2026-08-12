@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,6 +41,7 @@ import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.SpatialAudio
 import androidx.compose.material.icons.filled.SpeakerPhone
 import androidx.compose.material.icons.filled.SurroundSound
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VerticalAlignCenter
 import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.AlertDialog
@@ -166,6 +168,8 @@ fun EffectSection(
                         checked = enabled,
                         onCheckedChange = onEnabledChange,
                     )
+                } else {
+                    Spacer(modifier = Modifier.height(48.dp))
                 }
             }
 
@@ -218,8 +222,14 @@ fun MasterLimiterRows(
     val limDb = if (limiter > 0) rawToDb(limiter) else -99.9
     val left = 50 - channelPan / 2
     val right = 50 + channelPan / 2
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    EffectSection(
+        title = stringResource(R.string.section_master_limiter),
+        enabled = true,
+        onEnabledChange = {},
+        descriptionRes = R.string.effect_desc_master_limiter,
+        icon = Icons.Default.Tune,
+        hasEnableSwitch = false,
+        initiallyExpanded = true,
     ) {
         LabeledSlider(
             label = stringResource(R.string.label_output_volume),
