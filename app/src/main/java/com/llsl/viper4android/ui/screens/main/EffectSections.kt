@@ -6,6 +6,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -62,6 +64,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -74,6 +78,7 @@ import com.llsl.viper4android.ui.components.EqEditDialog
 import com.llsl.viper4android.ui.components.LabeledDropdown
 import com.llsl.viper4android.ui.components.LabeledSlider
 import com.llsl.viper4android.ui.components.LabeledSwitch
+import com.llsl.viper4android.ui.components.RichText
 import com.llsl.viper4android.ui.components.SliderEdit
 import com.llsl.viper4android.ui.components.resolvePresetName
 import java.util.Locale
@@ -85,11 +90,13 @@ private fun rawToDb(raw: Number): Double = 20.0 * log10(raw.toDouble() / 100.0)
 
 private fun dbToRaw(db: Double): Int = (10.0.pow(db / 20.0) * 100.0).roundToInt()
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun EffectSection(
     title: String,
     enabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
+    descriptionRes: Int,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     hasEnableSwitch: Boolean = true,
@@ -98,6 +105,8 @@ fun EffectSection(
     content: @Composable () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+    var showHelpDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
 
     Card(
         modifier =
@@ -114,7 +123,25 @@ fun EffectSection(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .then(if (toggleOnly) Modifier else Modifier.clickable { expanded = !expanded })
+                        .then(
+                            if (toggleOnly) {
+                                Modifier.combinedClickable(
+                                    onClick = {},
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        showHelpDialog = true
+                                    }
+                                )
+                            } else {
+                                Modifier.combinedClickable(
+                                    onClick = { expanded = !expanded },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        showHelpDialog = true
+                                    }
+                                )
+                            }
+                        )
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -159,6 +186,23 @@ fun EffectSection(
                 }
             }
         }
+    }
+
+    if (showHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showHelpDialog = false },
+            title = { Text(text = title) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    RichText(text = stringResource(descriptionRes))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showHelpDialog = false }) {
+                    Text(text = stringResource(android.R.string.ok))
+                }
+            }
+        )
     }
 }
 
@@ -239,6 +283,7 @@ fun PlaybackGainSection(
         title = stringResource(R.string.section_agc),
         enabled = enabled,
         onEnabledChange = viewModel::setPlaybackGainControlEnabled,
+        descriptionRes = R.string.effect_desc_playback_gain_control,
         icon = Icons.AutoMirrored.Filled.TrendingUp,
     ) {
         LabeledSlider(
@@ -312,6 +357,7 @@ fun LUFSTargetingSection(
         title = stringResource(R.string.section_lufs_targeting),
         enabled = enabled,
         onEnabledChange = viewModel::setLufsEnabled,
+        descriptionRes = R.string.effect_desc_lufs_targeting,
         icon = Icons.Default.CrisisAlert,
     ) {
         LabeledSlider(
@@ -383,6 +429,7 @@ fun FetCompressorSection(
         title = stringResource(R.string.section_fet_compressor),
         enabled = enabled,
         onEnabledChange = viewModel::setFetCompressorEnabled,
+        descriptionRes = R.string.effect_desc_fet_compressor,
         icon = Icons.Default.VerticalAlignCenter,
     ) {
         LabeledSlider(
@@ -655,6 +702,7 @@ fun MultibandCompressorSection(
         title = stringResource(R.string.section_multiband_compressor),
         enabled = enabled,
         onEnabledChange = viewModel::setMultibandCompressorEnabled,
+        descriptionRes = R.string.effect_desc_multiband_compressor,
         icon = Icons.Default.Compress,
     ) {
         PrimaryTabRow(selectedTabIndex = selectedTab) {
@@ -928,6 +976,7 @@ fun DdcSection(
         title = stringResource(R.string.section_ddc),
         enabled = enabled,
         onEnabledChange = viewModel::setDdcEnabled,
+        descriptionRes = R.string.effect_desc_ddc,
         icon = Icons.Default.SettingsInputComponent,
     ) {
         LabeledDropdown(
@@ -957,6 +1006,7 @@ fun SpectrumExtensionSection(
         title = stringResource(R.string.section_spectrum_extension),
         enabled = enabled,
         onEnabledChange = viewModel::setSpectrumExtensionEnabled,
+        descriptionRes = R.string.effect_desc_spectrum_extension,
         icon = Icons.Default.Waves,
     ) {
         LabeledSlider(
@@ -1021,6 +1071,7 @@ fun EqualizerSection(
         title = stringResource(R.string.section_equalizer),
         enabled = enabled,
         onEnabledChange = onEnabledChange,
+        descriptionRes = R.string.effect_desc_equalizer,
         icon = Icons.Default.Equalizer,
     ) {
         var showEqDialog by remember { mutableStateOf(false) }
@@ -1118,6 +1169,7 @@ fun DynamicEqSection(
         title = stringResource(R.string.section_dynamic_eq),
         enabled = enabled,
         onEnabledChange = viewModel::setDynamicEqEnabled,
+        descriptionRes = R.string.effect_desc_dynamic_eq,
         icon = Icons.Default.Insights,
     ) {
         PrimaryScrollableTabRow(
@@ -1312,6 +1364,7 @@ fun ConvolverSection(
         title = stringResource(R.string.section_convolver),
         enabled = enabled,
         onEnabledChange = viewModel::setConvolverEnabled,
+        descriptionRes = R.string.effect_desc_convolver,
         icon = Icons.Default.BlurCircular,
     ) {
         LabeledDropdown(
@@ -1355,6 +1408,7 @@ fun FieldSurroundSection(
         title = stringResource(R.string.section_field_surround),
         enabled = enabled,
         onEnabledChange = viewModel::setFieldSurroundEnabled,
+        descriptionRes = R.string.effect_desc_field_surround,
         icon = Icons.Default.SurroundSound,
     ) {
         LabeledSlider(
@@ -1419,6 +1473,7 @@ fun DiffSurroundSection(
         title = stringResource(R.string.section_diff_surround),
         enabled = enabled,
         onEnabledChange = viewModel::setDiffSurroundEnabled,
+        descriptionRes = R.string.effect_desc_diff_surround,
         icon = Icons.Default.SpatialAudio,
     ) {
         LabeledSlider(
@@ -1493,6 +1548,7 @@ fun StereoImagerSection(
         title = stringResource(R.string.section_stereo_imager),
         enabled = enabled,
         onEnabledChange = viewModel::setStereoImagerEnabled,
+        descriptionRes = R.string.effect_desc_stereo_imager,
         icon = Icons.Default.AspectRatio,
     ) {
         LabeledSlider(
@@ -1588,6 +1644,7 @@ fun HeadphoneSurroundSection(
         title = stringResource(R.string.section_headphone_surround),
         enabled = enabled,
         onEnabledChange = viewModel::setHeadphoneSurroundEnabled,
+        descriptionRes = R.string.effect_desc_headphone_surround,
         icon = Icons.Default.Headphones,
     ) {
         LabeledSlider(
@@ -1624,6 +1681,7 @@ fun ReverberationSection(
         title = stringResource(R.string.section_reverb),
         enabled = enabled,
         onEnabledChange = viewModel::setReverbEnabled,
+        descriptionRes = R.string.effect_desc_reverb,
         icon = Icons.Default.BlurOn,
     ) {
         LabeledSlider(
@@ -1736,6 +1794,7 @@ fun DynamicSystemSection(
         title = stringResource(R.string.section_dynamic_system),
         enabled = enabled,
         onEnabledChange = viewModel::setDynamicSystemEnabled,
+        descriptionRes = R.string.effect_desc_dynamic_system,
         icon = Icons.Default.CandlestickChart,
     ) {
         val presetName =
@@ -1944,6 +2003,7 @@ fun TubeSimulatorSection(
         title = stringResource(R.string.section_tube_simulator),
         enabled = enabled,
         onEnabledChange = viewModel::setTubeSimulatorEnabled,
+        descriptionRes = R.string.effect_desc_tube_simulator,
         icon = Icons.Default.MusicNote,
         toggleOnly = true,
     ) {}
@@ -1975,6 +2035,7 @@ fun PsychoacousticBassSection(
         title = stringResource(R.string.section_psycho_bass),
         enabled = enabled,
         onEnabledChange = viewModel::setPsychoacousticBassEnabled,
+        descriptionRes = R.string.effect_desc_psychoacoustic_bass,
         icon = Icons.Default.Psychology,
     ) {
         LabeledSlider(
@@ -2056,6 +2117,7 @@ fun ViperBassSection(
         title = stringResource(R.string.section_viper_bass),
         enabled = enabled,
         onEnabledChange = viewModel::setBassEnabled,
+        descriptionRes = R.string.effect_desc_viper_bass,
         icon = Icons.Default.GraphicEq,
     ) {
         LabeledDropdown(
@@ -2128,6 +2190,7 @@ fun ViperBassMonoSection(
         title = stringResource(R.string.section_viper_bass_mono),
         enabled = enabled,
         onEnabledChange = viewModel::setBassMonoEnabled,
+        descriptionRes = R.string.effect_desc_viper_bass_mono,
         icon = Icons.Default.GraphicEq,
     ) {
         LabeledDropdown(
@@ -2198,6 +2261,7 @@ fun ViperClaritySection(
         title = stringResource(R.string.section_viper_clarity),
         enabled = enabled,
         onEnabledChange = viewModel::setClarityEnabled,
+        descriptionRes = R.string.effect_desc_viper_clarity,
         icon = Icons.Default.Hearing,
     ) {
         LabeledDropdown(
@@ -2244,6 +2308,7 @@ fun AuditoryProtectionSection(
         title = stringResource(R.string.section_cure),
         enabled = enabled,
         onEnabledChange = viewModel::setCureEnabled,
+        descriptionRes = R.string.effect_desc_cure,
         icon = Icons.Default.HealthAndSafety,
     ) {
         LabeledDropdown(
@@ -2277,6 +2342,7 @@ fun AnalogXSection(
         title = stringResource(R.string.section_analogx),
         enabled = enabled,
         onEnabledChange = viewModel::setAnalogXEnabled,
+        descriptionRes = R.string.effect_desc_analogx,
         icon = Icons.Default.Memory,
     ) {
         LabeledDropdown(
@@ -2297,6 +2363,7 @@ fun SpeakerOptSection(
         title = stringResource(R.string.section_speaker_optimization),
         enabled = state.speakerCorrection.enable,
         onEnabledChange = viewModel::setSpeakerCorrectionEnabled,
+        descriptionRes = R.string.effect_desc_speaker_correction,
         icon = Icons.Default.SpeakerPhone,
         toggleOnly = true,
     ) {}
