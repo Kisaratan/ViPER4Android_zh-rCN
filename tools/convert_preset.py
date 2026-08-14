@@ -1154,7 +1154,14 @@ def xml_to_v1(content: str) -> dict[str, Any]:
         parts = ds.split(";")
         if len(parts) >= 6:
             for idx, k in enumerate(
-                ["dsXLow", "dsXHigh", "dsYLow", "dsYHigh", "dsSideGainLow", "dsSideGainHigh"]
+                [
+                    "dsXLow",
+                    "dsXHigh",
+                    "dsYLow",
+                    "dsYHigh",
+                    "dsSideGainLow",
+                    "dsSideGainHigh",
+                ]
             ):
                 pv = _to_int(parts[idx])
                 if pv is not None:
@@ -1279,7 +1286,9 @@ def convert(
 ) -> dict[str, Any]:
     if fmt == "xml":
         if not xml_is_viper(text):
-            raise ValueError("input is XML but not a recognised ViPER preset (no param 36868)")
+            raise ValueError(
+                "input is XML but not a recognised ViPER preset (no param 36868)"
+            )
         return v1_to_v2(xml_to_v1(text), False, name=name, fill_defaults=fill_defaults)
     v1 = json.loads(text)
     if not isinstance(v1, dict):
@@ -1293,18 +1302,38 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Convert ViPER4Android v1 JSON / legacy XML presets to v2 grouped JSON.",
     )
     p.add_argument(
-        "input", type=Path, help="input preset file (v1 .json or legacy .xml); '-' for stdin"
+        "input",
+        type=Path,
+        help="input preset file (v1 .json or legacy .xml); '-' for stdin",
     )
-    p.add_argument("-o", "--output", type=Path, default=None, help="output file (default: stdout)")
+    p.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=None,
+        help="output file (default: stdout)",
+    )
     fmt = p.add_mutually_exclusive_group()
     fmt.add_argument(
-        "--xml", dest="fmt", action="store_const", const="xml", help="force legacy-XML input"
+        "--xml",
+        dest="fmt",
+        action="store_const",
+        const="xml",
+        help="force legacy-XML input",
     )
     fmt.add_argument(
-        "--v1", dest="fmt", action="store_const", const="v1json", help="force v1-JSON input"
+        "--v1",
+        dest="fmt",
+        action="store_const",
+        const="v1json",
+        help="force v1-JSON input",
     )
     p.set_defaults(fmt=None)
-    p.add_argument("--name", default=None, help="preset name to embed in v2 output")
+    p.add_argument(
+        "--name",
+        default=None,
+        help="preset name to embed in v2 output",
+    )
     p.add_argument(
         "--no-fill-defaults",
         dest="fill_defaults",
