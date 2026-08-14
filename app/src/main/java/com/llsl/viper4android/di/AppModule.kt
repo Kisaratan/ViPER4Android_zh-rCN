@@ -35,8 +35,8 @@ object AppModule {
     fun provideDatabase(
         @ApplicationContext context: Context,
     ): ViperDatabase {
-        lateinit var db: ViperDatabase
-        db =
+        lateinit var viperDb: ViperDatabase
+        viperDb =
             Room
                 .databaseBuilder(
                     context,
@@ -50,22 +50,22 @@ object AppModule {
                     ViperDatabase.MIGRATION_5_6,
                 ).addCallback(
                     object : RoomDatabase.Callback() {
-                        override fun onCreate(sqDb: SupportSQLiteDatabase) {
-                            super.onCreate(sqDb)
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            super.onCreate(db)
                             CoroutineScope(Dispatchers.IO).launch {
-                                seedEqPresets(db.eqPresetDao())
-                                seedDsPresets(db.dsPresetDao())
+                                seedEqPresets(viperDb.eqPresetDao())
+                                seedDsPresets(viperDb.dsPresetDao())
                             }
                         }
 
-                        override fun onOpen(sqDb: SupportSQLiteDatabase) {
-                            super.onOpen(sqDb)
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
                             CoroutineScope(Dispatchers.IO).launch {
-                                val eqDao = db.eqPresetDao()
+                                val eqDao = viperDb.eqPresetDao()
                                 if (eqDao.countBuiltins() == 0) {
                                     seedEqPresets(eqDao)
                                 }
-                                val dsDao = db.dsPresetDao()
+                                val dsDao = viperDb.dsPresetDao()
                                 if (dsDao.countBuiltins() == 0) {
                                     seedDsPresets(dsDao)
                                 }
@@ -73,7 +73,7 @@ object AppModule {
                         }
                     },
                 ).build()
-        return db
+        return viperDb
     }
 
     private suspend fun seedEqPresets(dao: EqPresetDao) {
