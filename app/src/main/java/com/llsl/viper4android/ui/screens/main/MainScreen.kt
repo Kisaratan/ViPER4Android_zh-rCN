@@ -209,6 +209,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             autoStartEnabled = autoStart,
             globalModeEnabled = globalMode,
             aidlModeActive = aidlMode,
+            debugModeEnabled = debugMode,
             onGlobalModeChanged = viewModel::toggleGlobalMode,
             driverStatus = driverStatus,
             appVersionName = appVersionName,
