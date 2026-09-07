@@ -306,6 +306,7 @@ fun EqEditDialog(
     }
 
     var showSaveDialog by remember { mutableStateOf(false) }
+    var deletePresetId by remember { mutableStateOf<Long?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -354,7 +355,7 @@ fun EqEditDialog(
                         Text(stringResource(R.string.action_save))
                     }
                     TextButton(
-                        onClick = { presetId?.let { onPresetDelete(it) } },
+                        onClick = { deletePresetId = presetId },
                         enabled = presetId != null,
                     ) {
                         Icon(
@@ -467,6 +468,23 @@ fun EqEditDialog(
             onDismiss = { showSaveDialog = false },
             dismissLabel = stringResource(android.R.string.cancel),
             placeholder = stringResource(R.string.preset_name_hint),
+        )
+    }
+
+    deletePresetId?.let { targetId ->
+        val targetName =
+            presets.find { it.id == targetId }?.let { resolvePresetName(it) }
+                ?: stringResource(R.string.label_custom)
+        ConfirmDialog(
+            title = stringResource(R.string.preset_delete_title),
+            body = stringResource(R.string.preset_delete_confirm, targetName),
+            confirmLabel = stringResource(R.string.action_delete),
+            destructive = true,
+            onConfirm = {
+                onPresetDelete(targetId)
+                deletePresetId = null
+            },
+            onDismiss = { deletePresetId = null },
         )
     }
 }
