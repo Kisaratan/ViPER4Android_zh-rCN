@@ -46,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -54,6 +53,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.llsl.viper4android.R
 import com.llsl.viper4android.effect.EffectState
+import com.llsl.viper4android.ui.components.UiDimens
 import com.llsl.viper4android.ui.screens.debug.DebugLogDialog
 import com.llsl.viper4android.ui.screens.device.DeviceDialog
 import com.llsl.viper4android.ui.screens.preset.PresetDialog
@@ -279,10 +279,10 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                                     MaterialTheme.colorScheme.onSurfaceVariant
                                 }
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Canvas(modifier = Modifier.size(5.dp)) {
+                                Canvas(modifier = Modifier.size(UiDimens.Small)) {
                                     drawCircle(dotColor)
                                 }
-                                Spacer(modifier = Modifier.width(5.dp))
+                                Spacer(modifier = Modifier.width(UiDimens.Small))
                                 Text(
                                     text = deviceName,
                                     style = MaterialTheme.typography.labelSmall,
@@ -385,9 +385,9 @@ private fun EffectList(
     )
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
-        contentPadding = PaddingValues(bottom = 88.dp),
+        contentPadding = PaddingValues(bottom = UiDimens.FabListPadding),
     ) {
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { Spacer(modifier = Modifier.height(UiDimens.Medium)) }
         item { MasterLimiterRows(state, viewModel) }
         item { PlaybackGainSection(state, viewModel) }
         item { LUFSTargetingSection(state, viewModel) }

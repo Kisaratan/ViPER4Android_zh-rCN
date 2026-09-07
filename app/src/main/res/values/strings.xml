@@ -97,6 +97,7 @@
     <string name="label_dynamic_eq_target_gain">Target Gain</string>
     <string name="label_dynamic_eq_filter_type">Filter Type</string>
     <string name="dialog_delete_band">Delete Band</string>
+    <string name="dialog_delete_band_confirm">Remove %1$s Band?</string>
 
     <!-- Convolver -->
     <string name="section_convolver">Convolver</string>
