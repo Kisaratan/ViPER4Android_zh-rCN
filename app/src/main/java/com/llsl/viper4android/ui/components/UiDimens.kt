@@ -21,6 +21,7 @@ object UiDimens {
     val IconMedium = 20.dp
     val IconLarge = 24.dp
     val ChipHeight = 28.dp
+    val AppIcon = 32.dp
     val SwitchSlotHeight = 48.dp
     val ListRowHeight = 52.dp
     val ValueColumnWidth = 56.dp

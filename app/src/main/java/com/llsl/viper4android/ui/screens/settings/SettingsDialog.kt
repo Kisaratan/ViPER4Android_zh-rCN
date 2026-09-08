@@ -26,6 +26,7 @@ import com.llsl.viper4android.ui.components.DialogCard
 import com.llsl.viper4android.ui.components.DialogSectionLabel
 import com.llsl.viper4android.ui.components.IndicatorInfoRow
 import com.llsl.viper4android.ui.components.InfoRow
+import com.llsl.viper4android.ui.components.NavRow
 import com.llsl.viper4android.ui.components.RowDivider
 import com.llsl.viper4android.ui.components.ToggleRow
 import com.llsl.viper4android.ui.screens.main.DriverStatus
@@ -41,6 +42,7 @@ fun SettingsDialog(
     appVersionName: String,
     onAutoStartChanged: (Boolean) -> Unit,
     onGlobalModeChanged: (Boolean) -> Unit,
+    onOpenExcludedApps: () -> Unit,
     onImportPreset: () -> Unit,
     onImportKernel: () -> Unit,
     onDebugUnlocked: () -> Unit,
@@ -87,6 +89,14 @@ fun SettingsDialog(
                         checked = globalModeEnabled,
                         onCheckedChange = onGlobalModeChanged,
                     )
+                    if (!globalModeEnabled) {
+                        RowDivider()
+                        NavRow(
+                            label = stringResource(R.string.settings_excluded_apps),
+                            subtitle = stringResource(R.string.settings_excluded_apps_desc),
+                            onClick = onOpenExcludedApps,
+                        )
+                    }
                 }
 
                 DialogSectionLabel(label = stringResource(R.string.settings_files_section))

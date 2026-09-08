@@ -57,6 +57,7 @@ import com.llsl.viper4android.ui.components.UiDimens
 import com.llsl.viper4android.ui.screens.debug.DebugLogDialog
 import com.llsl.viper4android.ui.screens.device.DeviceDialog
 import com.llsl.viper4android.ui.screens.preset.PresetDialog
+import com.llsl.viper4android.ui.screens.settings.ExcludedAppsDialog
 import com.llsl.viper4android.ui.screens.settings.SettingsDialog
 import com.llsl.viper4android.ui.screens.settings.UpdateDialog
 import com.llsl.viper4android.ui.screens.status.DriverStatusDialog
@@ -84,12 +85,14 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     val aidlMode by viewModel.aidlModeEnabled.collectAsStateWithLifecycle()
     val debugMode by viewModel.debugModeEnabled.collectAsStateWithLifecycle()
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    val excludedApps by viewModel.excludedApps.collectAsStateWithLifecycle()
 
     var showPresetDialog by remember { mutableStateOf(false) }
     var showDriverStatusDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showDebugLog by remember { mutableStateOf(false) }
     var showDeviceDialog by remember { mutableStateOf(false) }
+    var showExcludedAppsDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val appVersionName =
@@ -103,6 +106,15 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
 
     val clearAllProgressStr = stringResource(R.string.preset_clear_all_progress)
     val clearedStr = stringResource(R.string.preset_cleared)
+
+    if (showExcludedAppsDialog) {
+        ExcludedAppsDialog(
+            excludedApps = excludedApps,
+            onToggle = viewModel::setAppExcluded,
+            loadInstalledApps = viewModel::loadInstalledApps,
+            onDismiss = { showExcludedAppsDialog = false },
+        )
+    }
 
     if (showPresetDialog) {
         PresetDialog(
@@ -211,6 +223,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             aidlModeActive = aidlMode,
             debugModeEnabled = debugMode,
             onGlobalModeChanged = viewModel::toggleGlobalMode,
+            onOpenExcludedApps = { showExcludedAppsDialog = true },
             driverStatus = driverStatus,
             appVersionName = appVersionName,
             onAutoStartChanged = viewModel::toggleAutoStart,

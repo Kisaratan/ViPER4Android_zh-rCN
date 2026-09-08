@@ -235,7 +235,9 @@
     <string name="settings_auto_start_desc">Start audio service on boot</string>
     <string name="settings_aidl_mode">AIDL mode</string>
     <string name="settings_global_mode">Global mode</string>
+    <string name="settings_excluded_apps">Excluded apps</string>
     <string name="settings_global_mode_desc">Apply effects globally</string>
+    <string name="settings_excluded_apps_desc">Skip audio session for selected apps</string>
     <string name="settings_import_preset_desc">Load a .json preset file</string>
     <string name="settings_import_kernel_desc">Convolver impulse response</string>
     <string name="settings_import_vdc_desc">DDC calibration file</string>
@@ -247,6 +249,12 @@
     <string name="settings_import_vdc">Import VDC</string>
     <string name="import_success">Imported successfully</string>
     <string name="import_failed">Import failed</string>
+
+    <!-- Excluded Apps -->
+    <string name="excluded_apps_title">Excluded Apps</string>
+    <string name="excluded_apps_search">Search apps</string>
+    <string name="excluded_apps_loading">Loading apps\u2026</string>
+    <string name="excluded_apps_show_system">Show system apps</string>
 
     <!-- Update -->
     <string name="update_checking">Checking for updates\u2026</string>
