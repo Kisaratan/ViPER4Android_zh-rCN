@@ -232,10 +232,13 @@
     <string name="settings_files_section">Files</string>
     <string name="settings_about_section">About</string>
     <string name="settings_auto_start">Auto-start on boot</string>
-    <string name="settings_auto_start_desc">Start audio service on boot</string>
     <string name="settings_aidl_mode">AIDL mode</string>
     <string name="settings_global_mode">Global mode</string>
     <string name="settings_excluded_apps">Excluded apps</string>
+    <string name="settings_import_preset">Import Preset</string>
+    <string name="settings_import_kernel">Import Kernel</string>
+    <string name="settings_import_vdc">Import VDC</string>
+    <string name="settings_auto_start_desc">Start audio service on boot</string>
     <string name="settings_global_mode_desc">Apply effects globally</string>
     <string name="settings_excluded_apps_desc">Skip audio session for selected apps</string>
     <string name="settings_import_preset_desc">Load a .json preset file</string>
@@ -244,9 +247,6 @@
     <string name="settings_driver_version">Driver version</string>
     <string name="settings_driver_arch">Driver architecture</string>
     <string name="settings_app_version">App version</string>
-    <string name="settings_import_preset">Import Preset</string>
-    <string name="settings_import_kernel">Import Kernel</string>
-    <string name="settings_import_vdc">Import VDC</string>
     <string name="import_success">Imported successfully</string>
     <string name="import_failed">Import failed</string>
 
@@ -347,5 +347,4 @@
     <string name="ds_device_high_end_headphone_v1">High-End Headphone (v1)</string>
     <string name="ds_device_common_headphone_v1">Common Headphone (v1)</string>
     <string name="ds_device_common_earphone_v1">Common Earphone (v1)</string>
-
 </resources>
