@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.llsl.viper4android.R
 import com.llsl.viper4android.ui.components.DialogCard
 import com.llsl.viper4android.ui.components.UiDimens
@@ -63,6 +64,8 @@ fun UpdateDialog(
     val blocks = remember(release.body) { parseBlocks(release.body) }
 
     AlertDialog(
+        modifier = Modifier.fillMaxWidth(0.9f),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = { if (!downloading) onDismiss() },
         title = {
             Row(
